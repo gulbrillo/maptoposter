@@ -13,8 +13,6 @@ from datetime import datetime
 import argparse
 from math import cos, radians
 from shapely.geometry import box as shapely_box
-import pandas as pd
-import requests
 
 THEMES_DIR = "themes"
 FONTS_DIR = "fonts"
@@ -346,141 +344,6 @@ def features_from_polygon_compat(poly_lonlat, tags):
         return ox.geometries_from_polygon(poly_lonlat, tags=tags)
 
 
-def _ensure_polygon_list(geom):
-    if geom is None:
-        return []
-    if hasattr(geom, "geoms"):
-        return list(geom.geoms)
-    return [geom]
-
-
-def _subdivide_polygon_for_progress(poly_lonlat):
-    try:
-        subdivided = ox.utils_geo._consolidate_subdivide_geometry(poly_lonlat)
-    except Exception:
-        subdivided = poly_lonlat
-    return _ensure_polygon_list(subdivided)
-
-
-def _polygon_to_overpass_poly(poly):
-    if poly is None or not hasattr(poly, "exterior"):
-        return ""
-    coords = list(poly.exterior.coords)
-    return " ".join([f"{lat:.6f} {lon:.6f}" for lon, lat in coords])
-
-
-def _build_overpass_filters(tags):
-    filters = []
-    for key, value in tags.items():
-        if value is True:
-            filters.append(f'["{key}"]')
-        elif isinstance(value, (list, set, tuple)):
-            for item in value:
-                filters.append(f'["{key}"="{item}"]')
-        else:
-            filters.append(f'["{key}"="{value}"]')
-    return filters
-
-
-def _overpass_count(poly_lonlat, tags, timeout=180):
-    polygons = _ensure_polygon_list(poly_lonlat)
-    if not polygons:
-        return None
-
-    filters = _build_overpass_filters(tags)
-    if not filters:
-        return None
-
-    endpoint = getattr(getattr(ox, "settings", None), "overpass_url", None)
-    if not endpoint:
-        endpoint = "https://overpass-api.de/api/interpreter"
-
-    total = 0
-    for polygon in polygons:
-        poly_str = _polygon_to_overpass_poly(polygon)
-        if not poly_str:
-            return None
-        query_lines = "\n".join([f'  nwr{filter_clause}(poly:"{poly_str}");' for filter_clause in filters])
-        query = f"[out:json][timeout:{timeout}];(\n{query_lines}\n);out count;"
-
-        try:
-            response = requests.post(endpoint, data={"data": query}, timeout=timeout)
-            response.raise_for_status()
-            payload = response.json()
-        except Exception:
-            return None
-
-        for element in payload.get("elements", []):
-            if element.get("type") == "count":
-                tags_payload = element.get("tags", {})
-                for key in ("nodes", "ways", "relations"):
-                    value = tags_payload.get(key)
-                    if value is not None:
-                        total += int(value)
-    return total or None
-
-
-def _concat_feature_frames(frames):
-    frames = [frame for frame in frames if frame is not None and not frame.empty]
-    if not frames:
-        return None
-    combined = pd.concat(frames)
-    if combined.index.has_duplicates:
-        combined = combined[~combined.index.duplicated(keep="first")]
-    return combined
-
-
-def fetch_features_with_progress(poly_lonlat, tags, task_label):
-    polygons = _subdivide_polygon_for_progress(poly_lonlat)
-    expected_total = _overpass_count(poly_lonlat, tags)
-    total_units = expected_total if expected_total else max(len(polygons), 1)
-    unit = "obj" if expected_total else "req"
-
-    frames = []
-    completed = 0
-    fetched_objects = 0
-    fetched_requests = 0
-    with tqdm(
-        total=total_units,
-        desc=f"{task_label} details",
-        unit=unit,
-        position=1,
-        leave=False,
-        bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}',
-        dynamic_ncols=True
-    ) as detail_pbar:
-        for polygon in polygons:
-            try:
-                result = features_from_polygon_compat(polygon, tags)
-            except Exception:
-                result = None
-
-            count = 0
-            if result is not None and not result.empty:
-                frames.append(result)
-                count = len(result.index.unique())
-
-            if expected_total:
-                completed += count
-                if completed > detail_pbar.total:
-                    detail_pbar.total = completed
-                detail_pbar.update(count)
-                fetched_objects += count
-                fetched_requests += 1
-                detail_pbar.set_postfix_str(
-                    f"objects={fetched_objects:,} requests={fetched_requests}/{len(polygons)}"
-                )
-            else:
-                fetched_objects += count
-                fetched_requests += 1
-                detail_pbar.update(1)
-                detail_pbar.set_postfix_str(
-                    f"objects={fetched_objects:,} requests={fetched_requests}/{len(polygons)}"
-                )
-
-    return _concat_feature_frames(frames)
-
-
 def spaced_caps(text: str) -> str:
     text = (text or "").strip()
     if not text:
@@ -580,8 +443,7 @@ def create_poster(
     debug=False,
     roads_network=False,
     no_credits=False,
-    road_type="all",
-    no_rail=False
+    road_type="all"
 ):
     print(f"\nGenerating map for {city}, {country}...")
 
@@ -595,41 +457,24 @@ def create_poster(
     # roads network distance requirement: dist_network = dist_y * 2.5
     dist_network_m = int(round(dist_y * 2.5))
 
-    total_steps = 3 if no_rail else 4
-    with tqdm(
-        total=total_steps,
-        desc="Fetching map data",
-        unit="step",
-        position=0,
-        bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}',
-        dynamic_ncols=True
-    ) as pbar:
+    with tqdm(total=4, desc="Fetching map data", unit="step",
+              bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
 
         # 1) Roads (graph)
         pbar.set_description("Downloading street network")
-        with tqdm(
-            total=1,
-            desc="Street network details",
-            unit="req",
-            position=1,
-            leave=False,
-            bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}',
-            dynamic_ncols=True
-        ) as detail_pbar:
-            if roads_network:
-                if debug:
-                    print("\n[DEBUG] Roads mode: dist_type='network'")
-                    print(f"  center (lat, lon): {point[0]:.8f}, {point[1]:.8f}")
-                    print(f"  dist_network_m (m): {dist_network_m}")
-                G = graph_from_point_network(point, dist_network_m, network_type=road_type)
-                debug_graph_bounds(debug, "Roads graph bounds (after network download)", G)
-            else:
-                if debug:
-                    west_b, south_b, east_b, north_b = poly_lonlat.bounds
-                    debug_bbox_step(debug, "Roads request (graph_from_polygon) bounds", north_b, south_b, east_b, west_b)
-                G = graph_from_polygon_compat(poly_lonlat, network_type=road_type)
-                debug_graph_bounds(debug, "Roads graph bounds (after polygon download)", G)
-            detail_pbar.update(1)
+        if roads_network:
+            if debug:
+                print("\n[DEBUG] Roads mode: dist_type='network'")
+                print(f"  center (lat, lon): {point[0]:.8f}, {point[1]:.8f}")
+                print(f"  dist_network_m (m): {dist_network_m}")
+            G = graph_from_point_network(point, dist_network_m, network_type=road_type)
+            debug_graph_bounds(debug, "Roads graph bounds (after network download)", G)
+        else:
+            if debug:
+                west_b, south_b, east_b, north_b = poly_lonlat.bounds
+                debug_bbox_step(debug, "Roads request (graph_from_polygon) bounds", north_b, south_b, east_b, west_b)
+            G = graph_from_polygon_compat(poly_lonlat, network_type=road_type)
+            debug_graph_bounds(debug, "Roads graph bounds (after polygon download)", G)
 
         pbar.update(1)
         time.sleep(0.5)
@@ -640,10 +485,9 @@ def create_poster(
             if debug:
                 west_b, south_b, east_b, north_b = poly_lonlat.bounds
                 debug_bbox_step(debug, "Water request (features_from_polygon) bounds", north_b, south_b, east_b, west_b)
-            water = fetch_features_with_progress(
+            water = features_from_polygon_compat(
                 poly_lonlat,
-                tags={'natural': 'water', 'waterway': 'riverbank'},
-                task_label="Water features"
+                tags={'natural': 'water', 'waterway': 'riverbank'}
             )
         except Exception:
             water = None
@@ -656,10 +500,9 @@ def create_poster(
             if debug:
                 west_b, south_b, east_b, north_b = poly_lonlat.bounds
                 debug_bbox_step(debug, "Parks request (features_from_polygon) bounds", north_b, south_b, east_b, west_b)
-            parks = fetch_features_with_progress(
+            parks = features_from_polygon_compat(
                 poly_lonlat,
-                tags={'leisure': 'park', 'landuse': 'grass'},
-                task_label="Parks/green spaces"
+                tags={'leisure': 'park', 'landuse': 'grass'}
             )
         except Exception:
             parks = None
@@ -667,21 +510,18 @@ def create_poster(
         time.sleep(0.3)
 
         # 4) Railways
-        railways = None
-        if not no_rail:
-            pbar.set_description("Downloading railways")
-            try:
-                if debug:
-                    west_b, south_b, east_b, north_b = poly_lonlat.bounds
-                    debug_bbox_step(debug, "Railways request (features_from_polygon) bounds", north_b, south_b, east_b, west_b)
-                railways = fetch_features_with_progress(
-                    poly_lonlat,
-                    tags={'railway': True},
-                    task_label="Railways"
-                )
-            except Exception:
-                railways = None
-            pbar.update(1)
+        pbar.set_description("Downloading railways")
+        try:
+            if debug:
+                west_b, south_b, east_b, north_b = poly_lonlat.bounds
+                debug_bbox_step(debug, "Railways request (features_from_polygon) bounds", north_b, south_b, east_b, west_b)
+            railways = features_from_polygon_compat(
+                poly_lonlat,
+                tags={'railway': True}
+            )
+        except Exception:
+            railways = None
+        pbar.update(1)
 
     print("✓ All data downloaded successfully!")
 
@@ -712,8 +552,7 @@ def create_poster(
         coll.set_zorder(5)
 
     # Layer 2.5: Railways
-    if not no_rail:
-        _plot_lines_only(railways, ax=ax, color=THEME['railway'], linewidth=0.6, zorder=6)
+    _plot_lines_only(railways, ax=ax, color=THEME['railway'], linewidth=0.6, zorder=6)
 
     # If roads were fetched via network distance, enforce the poster bbox extents so the
     # gradients/features remain aligned to the intended poster framing.
@@ -871,8 +710,6 @@ Road network behavior (optional):
     parser.add_argument('--list-themes', action='store_true', help='List all available themes')
     parser.add_argument('--no-credits', action='store_true',
                         help='Do not render the © OpenStreetMap contributors credit text')
-    parser.add_argument('--no-rail', action='store_true',
-                        help='Skip downloading and rendering rail networks')
     parser.add_argument('--road-type', '-r', type=str, default='all',
                         help="Road network type for OSMnx (default: all). Examples: drive, walk, bike.")
 
@@ -925,8 +762,7 @@ Road network behavior (optional):
             debug=args.debug_bbox,
             roads_network=args.roads_network,
             no_credits=args.no_credits,
-            road_type=args.road_type,
-            no_rail=args.no_rail
+            road_type=args.road_type
         )
 
         print("\n" + "=" * 50)
