@@ -45,6 +45,7 @@ python create_map_poster.py --city <city> --country <country> [options]
 | `--list-themes` | | List all available themes | |
 | `--debug-bbox` | | Show bounding box dimensions | |
 | `--network` | | Load roads not from bounding box but from nodes within network distance from the centermost node | |
+| `--no-rail` | | Skip downloading and rendering rail networks | |
 | `--road-type` | `-r` | Road network type for OSMnx: all, drive, drive_service, walk, bike, all_private | all |
 
 ### Examples
@@ -117,6 +118,7 @@ python create_map_poster.py --list-themes
 
 - **Road-type hierarchy**: Roads are colored and weighted by OSM highway type (motorway → residential), so posters emphasize major arterials while still retaining local streets. Theme files define the palette via `road_motorway`, `road_primary`, `road_secondary`, `road_tertiary`, `road_residential`, and `road_default` keys.
 - **Railway overlays**: Rail lines from OSM are supported as an optional layer. When present, they render using the theme's `railway` color, making transit corridors stand out without overpowering the road network.
+  Use `--no-rail` to skip downloading and rendering rail networks when you want faster or cleaner maps.
 
 ## Output
 
