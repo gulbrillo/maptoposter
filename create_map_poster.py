@@ -569,7 +569,8 @@ def create_poster(
     debug=False,
     roads_network=False,
     no_credits=False,
-    road_type="all"
+    road_type="all",
+    no_rail=False
 ):
     print(f"\nGenerating map for {city}, {country}...")
 
@@ -583,8 +584,9 @@ def create_poster(
     # roads network distance requirement: dist_network = dist_y * 2.5
     dist_network_m = int(round(dist_y * 2.5))
 
+    total_steps = 3 if no_rail else 4
     with tqdm(
-        total=4,
+        total=total_steps,
         desc="Fetching map data",
         unit="step",
         position=0,
@@ -654,19 +656,21 @@ def create_poster(
         time.sleep(0.3)
 
         # 4) Railways
-        pbar.set_description("Downloading railways")
-        try:
-            if debug:
-                west_b, south_b, east_b, north_b = poly_lonlat.bounds
-                debug_bbox_step(debug, "Railways request (features_from_polygon) bounds", north_b, south_b, east_b, west_b)
-            railways = fetch_features_with_progress(
-                poly_lonlat,
-                tags={'railway': True},
-                task_label="Railways"
-            )
-        except Exception:
-            railways = None
-        pbar.update(1)
+        railways = None
+        if not no_rail:
+            pbar.set_description("Downloading railways")
+            try:
+                if debug:
+                    west_b, south_b, east_b, north_b = poly_lonlat.bounds
+                    debug_bbox_step(debug, "Railways request (features_from_polygon) bounds", north_b, south_b, east_b, west_b)
+                railways = fetch_features_with_progress(
+                    poly_lonlat,
+                    tags={'railway': True},
+                    task_label="Railways"
+                )
+            except Exception:
+                railways = None
+            pbar.update(1)
 
     print("✓ All data downloaded successfully!")
 
@@ -697,7 +701,8 @@ def create_poster(
         coll.set_zorder(5)
 
     # Layer 2.5: Railways
-    _plot_lines_only(railways, ax=ax, color=THEME['railway'], linewidth=0.6, zorder=6)
+    if not no_rail:
+        _plot_lines_only(railways, ax=ax, color=THEME['railway'], linewidth=0.6, zorder=6)
 
     # If roads were fetched via network distance, enforce the poster bbox extents so the
     # gradients/features remain aligned to the intended poster framing.
@@ -855,6 +860,8 @@ Road network behavior (optional):
     parser.add_argument('--list-themes', action='store_true', help='List all available themes')
     parser.add_argument('--no-credits', action='store_true',
                         help='Do not render the © OpenStreetMap contributors credit text')
+    parser.add_argument('--no-rail', action='store_true',
+                        help='Skip downloading and rendering rail networks')
     parser.add_argument('--road-type', '-r', type=str, default='all',
                         help="Road network type for OSMnx (default: all). Examples: drive, walk, bike.")
 
@@ -907,7 +914,8 @@ Road network behavior (optional):
             debug=args.debug_bbox,
             roads_network=args.roads_network,
             no_credits=args.no_credits,
-            road_type=args.road_type
+            road_type=args.road_type,
+            no_rail=args.no_rail
         )
 
         print("\n" + "=" * 50)
