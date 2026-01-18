@@ -74,6 +74,9 @@ python create_map_poster.py -c "San Francisco" -C "USA" -t sunset -d 10000    # 
 python create_map_poster.py -c "Sydney" -C "Australia" -t ocean -d 12000      # Harbor city
 python create_map_poster.py -c "Mumbai" -C "India" -t contrast_zones -d 18000 # Coastal peninsula
 
+# Optional layers
+python create_map_poster.py -c "Berlin" -C "Germany" -t noir -d 12000 --no-rail # Skip rail networks
+
 # River cities
 python create_map_poster.py -c "London" -C "UK" -t noir -d 15000              # Thames curves
 python create_map_poster.py -c "Budapest" -C "Hungary" -t copper_patina -d 8000  # Danube split
