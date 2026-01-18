@@ -112,6 +112,11 @@ python create_map_poster.py --list-themes
 | `copper_patina` | Oxidized copper aesthetic |
 | `monochrome_blue` | Single blue color family |
 
+## Map Data Support
+
+- **Road-type hierarchy**: Roads are colored and weighted by OSM highway type (motorway → residential), so posters emphasize major arterials while still retaining local streets. Theme files define the palette via `road_motorway`, `road_primary`, `road_secondary`, `road_tertiary`, `road_residential`, and `road_default` keys.
+- **Railway overlays**: Rail lines from OSM are supported as an optional layer. When present, they render using the theme's `railway` color, making transit corridors stand out without overpowering the road network.
+
 ## Output
 
 Posters are saved to `posters/` directory with format:
@@ -132,6 +137,7 @@ Create a JSON file in `themes/` directory:
   "gradient_color": "#FFFFFF",
   "water": "#C0C0C0",
   "parks": "#F0F0F0",
+  "railway": "#5A5A5A",
   "road_motorway": "#0A0A0A",
   "road_primary": "#1A1A1A",
   "road_secondary": "#2A2A2A",
