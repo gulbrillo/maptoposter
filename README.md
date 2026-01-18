@@ -45,6 +45,7 @@ python create_map_poster.py --city <city> --country <country> [options]
 | `--list-themes` | | List all available themes | |
 | `--debug-bbox` | | Show bounding box dimensions | |
 | `--network` | | Load roads not from bounding box but from nodes within network distance from the centermost node | |
+| `--road-type` | `-r` | Road network type for OSMnx: all, drive, drive_service, walk, bike, all_private | all |
 
 ### Examples
 
