@@ -417,7 +417,8 @@ def create_poster(
     output_file,
     debug=False,
     roads_network=False,
-    no_credits=False
+    no_credits=False,
+    road_type="all"
 ):
     print(f"\nGenerating map for {city}, {country}...")
 
@@ -441,13 +442,13 @@ def create_poster(
                 print("\n[DEBUG] Roads mode: dist_type='network'")
                 print(f"  center (lat, lon): {point[0]:.8f}, {point[1]:.8f}")
                 print(f"  dist_network_m (m): {dist_network_m}")
-            G = graph_from_point_network(point, dist_network_m, network_type='all')
+            G = graph_from_point_network(point, dist_network_m, network_type=road_type)
             debug_graph_bounds(debug, "Roads graph bounds (after network download)", G)
         else:
             if debug:
                 west_b, south_b, east_b, north_b = poly_lonlat.bounds
                 debug_bbox_step(debug, "Roads request (graph_from_polygon) bounds", north_b, south_b, east_b, west_b)
-            G = graph_from_polygon_compat(poly_lonlat, network_type='all')
+            G = graph_from_polygon_compat(poly_lonlat, network_type=road_type)
             debug_graph_bounds(debug, "Roads graph bounds (after polygon download)", G)
 
         pbar.update(1)
@@ -600,6 +601,7 @@ Examples:
   python create_map_poster.py -c "New York" -C "USA" -t noir -d 3000
   python create_map_poster.py -c "Paris" -C "France" -t noir -d 3000 --network
   python create_map_poster.py -c "Paris" -C "France" -t noir -d 3000 --network --debug-bbox
+  python create_map_poster.py -c "Portland" -C "USA" -t noir -d 3000 --road-type drive
 """)
 
 
@@ -665,6 +667,8 @@ Road network behavior (optional):
     parser.add_argument('--list-themes', action='store_true', help='List all available themes')
     parser.add_argument('--no-credits', action='store_true',
                         help='Do not render the © OpenStreetMap contributors credit text')
+    parser.add_argument('--road-type', '-r', type=str, default='all',
+                        help="Road network type for OSMnx (default: all). Examples: drive, walk, bike.")
 
 
     args = parser.parse_args()
@@ -708,7 +712,8 @@ Road network behavior (optional):
             coords, dist_x, dist_y, output_file,
             debug=args.debug_bbox,
             roads_network=args.roads_network,
-            no_credits=args.no_credits
+            no_credits=args.no_credits,
+            road_type=args.road_type
         )
 
         print("\n" + "=" * 50)
