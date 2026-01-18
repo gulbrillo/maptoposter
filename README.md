@@ -38,9 +38,13 @@ python create_map_poster.py --city <city> --country <country> [options]
 |--------|-------|-------------|---------|
 | `--city` | `-c` | City name | required |
 | `--country` | `-C` | Country name | required |
+| `--display-name` | `-n` | City name for display | --city |
+| `--display-country` | `-N` | Country name for display | --country |
 | `--theme` | `-t` | Theme name | feature_based |
 | `--distance` | `-d` | Map radius in meters | 29000 |
 | `--list-themes` | | List all available themes | |
+| `--debug-bbox` | | Show bounding box dimensions | |
+| `--network` | | Load roads not from bounding box but from nodes within network distance from the centermost node | |
 
 ### Examples
 
