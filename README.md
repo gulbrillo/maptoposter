@@ -120,9 +120,9 @@ python create_map_poster.py --list-themes
 
 ## Output
 
-Posters are saved to `posters/` directory with format:
+Posters are saved to `posters/` directory with format (using display name/country when provided):
 ```
-{city}_{theme}_{YYYYMMDD_HHMMSS}.png
+{city}_{country}_{theme}_{YYYYMMDD_HHMMSS}.png
 ```
 
 ## Adding Custom Themes
