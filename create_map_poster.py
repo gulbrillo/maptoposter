@@ -48,16 +48,21 @@ def load_fonts():
 FONTS = load_fonts()
 
 
-def generate_output_filename(city, theme_name):
+def generate_output_filename(city, country, theme_name, display_name=None, display_country=None):
     """
-    Generate unique output filename with city, theme, and datetime.
+    Generate unique output filename with city/country (display overrides), theme, and datetime.
     """
     if not os.path.exists(POSTERS_DIR):
         os.makedirs(POSTERS_DIR)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    city_slug = city.lower().replace(' ', '_')
-    filename = f"{city_slug}_{theme_name}_{timestamp}.png"
+
+    name_source = display_name if display_name and display_name.strip() else city
+    country_source = display_country if display_country and display_country.strip() else country
+
+    city_slug = name_source.lower().strip().replace(' ', '_')
+    country_slug = country_source.lower().strip().replace(' ', '_')
+    filename = f"{city_slug}_{country_slug}_{theme_name}_{timestamp}.png"
     return os.path.join(POSTERS_DIR, filename)
 
 
@@ -744,7 +749,13 @@ Road network behavior (optional):
 
     try:
         coords = get_coordinates(args.city, args.country)
-        output_file = generate_output_filename(args.city, args.theme)
+        output_file = generate_output_filename(
+            args.city,
+            args.country,
+            args.theme,
+            display_name=display_name,
+            display_country=display_country,
+        )
         create_poster(
             args.city, args.country, display_name, display_country,
             coords, dist_x, dist_y, output_file,
