@@ -438,6 +438,8 @@ def fetch_features_with_progress(poly_lonlat, tags, task_label):
 
     frames = []
     completed = 0
+    fetched_objects = 0
+    fetched_requests = 0
     with tqdm(
         total=total_units,
         desc=f"{task_label} details",
@@ -463,9 +465,18 @@ def fetch_features_with_progress(poly_lonlat, tags, task_label):
                 if completed > detail_pbar.total:
                     detail_pbar.total = completed
                 detail_pbar.update(count)
-                detail_pbar.set_postfix_str(f"objects={completed}")
+                fetched_objects += count
+                fetched_requests += 1
+                detail_pbar.set_postfix_str(
+                    f"objects={fetched_objects:,} requests={fetched_requests}/{len(polygons)}"
+                )
             else:
+                fetched_objects += count
+                fetched_requests += 1
                 detail_pbar.update(1)
+                detail_pbar.set_postfix_str(
+                    f"objects={fetched_objects:,} requests={fetched_requests}/{len(polygons)}"
+                )
 
     return _concat_feature_frames(frames)
 
