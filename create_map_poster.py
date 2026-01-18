@@ -96,6 +96,7 @@ def load_theme(theme_name="feature_based"):
             "road_secondary": "#2A2A2A",
             "road_tertiary": "#3A3A3A",
             "road_residential": "#4A4A4A",
+            "railway": "#5A5A5A",
             "road_default": "#3A3A3A"
         }
 
@@ -406,6 +407,25 @@ def _plot_polygons_only(gdf, ax, facecolor, zorder):
         polys.plot(ax=ax, facecolor=facecolor, edgecolor="none", zorder=zorder)
 
 
+def _plot_lines_only(gdf, ax, color, linewidth, zorder):
+    """
+    Plot LineString/MultiLineString geometries only.
+    """
+    if gdf is None or not hasattr(gdf, "empty") or gdf.empty:
+        return
+    if not hasattr(gdf, "geometry") or gdf.geometry is None:
+        return
+
+    try:
+        geom_types = gdf.geometry.geom_type
+        lines = gdf[geom_types.isin(["LineString", "MultiLineString"])]
+    except Exception:
+        lines = gdf
+
+    if hasattr(lines, "empty") and not lines.empty:
+        lines.plot(ax=ax, color=color, linewidth=linewidth, zorder=zorder)
+
+
 def create_poster(
     city,
     country,
@@ -432,7 +452,7 @@ def create_poster(
     # roads network distance requirement: dist_network = dist_y * 2.5
     dist_network_m = int(round(dist_y * 2.5))
 
-    with tqdm(total=3, desc="Fetching map data", unit="step",
+    with tqdm(total=4, desc="Fetching map data", unit="step",
               bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
 
         # 1) Roads (graph)
@@ -482,6 +502,21 @@ def create_poster(
         except Exception:
             parks = None
         pbar.update(1)
+        time.sleep(0.3)
+
+        # 4) Railways
+        pbar.set_description("Downloading railways")
+        try:
+            if debug:
+                west_b, south_b, east_b, north_b = poly_lonlat.bounds
+                debug_bbox_step(debug, "Railways request (features_from_polygon) bounds", north_b, south_b, east_b, west_b)
+            railways = features_from_polygon_compat(
+                poly_lonlat,
+                tags={'railway': True}
+            )
+        except Exception:
+            railways = None
+        pbar.update(1)
 
     print("✓ All data downloaded successfully!")
 
@@ -510,6 +545,9 @@ def create_poster(
     # Force roads above polygons
     for coll in ax.collections:
         coll.set_zorder(5)
+
+    # Layer 2.5: Railways
+    _plot_lines_only(railways, ax=ax, color=THEME['railway'], linewidth=0.6, zorder=6)
 
     # If roads were fetched via network distance, enforce the poster bbox extents so the
     # gradients/features remain aligned to the intended poster framing.
