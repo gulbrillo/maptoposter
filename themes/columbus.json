@@ -1,0 +1,16 @@
+{
+  "name": "Columbus After Dark",
+  "description": "Deep charcoal/navy base with Buckeye scarlet highlights and cool gray/white contrast (clean, modern Columbus vibe)",
+  "bg": "#0B0F14",
+  "text": "#E9EEF5",
+  "gradient_color": "#0A1624",
+  "water": "#070B10",
+  "parks": "#0F2A1F",
+  "road_motorway": "#BB0000",
+  "road_primary": "#8E949E",
+  "road_secondary": "#5F6774",
+  "road_tertiary": "#3F4754",
+  "road_residential": "#232A34",
+  "railway": "#C9D2DE",
+  "road_default": "#3F4754"
+}

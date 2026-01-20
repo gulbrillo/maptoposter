@@ -1,0 +1,16 @@
+{
+  "name": "Florida Night",
+  "description": "Dark UF Gators theme with deep blue background and neon orange/blue highlights",
+  "bg": "#070B1A",
+  "text": "#FF6A2A",
+  "gradient_color": "#070B1A",
+  "water": "#040714",
+  "parks": "#0B1024",
+  "road_motorway": "#FF6A2A",
+  "road_primary": "#3A6BFF",
+  "road_secondary": "#2F56D6",
+  "road_tertiary": "#2444AD",
+  "road_residential": "#1A2F66",
+  "railway": "#8A5BFF",
+  "road_default": "#2444AD"
+}

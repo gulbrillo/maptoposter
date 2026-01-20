@@ -1,0 +1,16 @@
+{
+  "name": "Minneapolis Midnight",
+  "description": "Cold dark navy base with icy lake blues, pine-green parks, and subtle steel-gray urban contrast (North Star State vibe)",
+  "bg": "#070E16",
+  "text": "#E6F1FA",
+  "gradient_color": "#0A1A2B",
+  "water": "#040A12",
+  "parks": "#0F3328",
+  "road_motorway": "#9CC9E8",
+  "road_primary": "#5FA7D8",
+  "road_secondary": "#3F7FB0",
+  "road_tertiary": "#2A5F8A",
+  "road_residential": "#1A3A57",
+  "railway": "#B8C6D6",
+  "road_default": "#2A5F8A"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Tanzania Nocturne",
+  "description": "Deep midnight base with Tanzanian green and gold highlights, Indian Ocean blues, and subtle charcoal contrast (elegant East Africa night vibe)",
+  "bg": "#070E14",
+  "text": "#EAF2F5",
+  "gradient_color": "#0A1A1F",
+  "water": "#040B10",
+  "parks": "#0F3A2A",
+  "road_motorway": "#E1B94A",
+  "road_primary": "#2FA4D9",
+  "road_secondary": "#1F7FB3",
+  "road_tertiary": "#165E86",
+  "road_residential": "#103F5C",
+  "railway": "#BFCED8",
+  "road_default": "#165E86"
+}

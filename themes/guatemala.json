@@ -1,0 +1,16 @@
+{
+  "name": "Guatemala",
+  "description": "Dark navy base with Guatemala sky-blue + white accents, quetzal-green parks, and subtle emblem-gold highlights",
+  "bg": "#081425",
+  "text": "#F3F7FF",
+  "gradient_color": "#0A1A33",
+  "water": "#050D1A",
+  "parks": "#0E3A2F",
+  "road_motorway": "#F2C14E",
+  "road_primary": "#4FA3E3",
+  "road_secondary": "#2F86CC",
+  "road_tertiary": "#1E5E96",
+  "road_residential": "#163B5E",
+  "railway": "#B9C5D6",
+  "road_default": "#1E5E96"
+}

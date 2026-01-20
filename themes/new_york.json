@@ -1,0 +1,16 @@
+{
+  "name": "New York Nocturne",
+  "description": "Deep midnight base with Empire-gold highlights, steel-gray primaries, and cool harbor blues (classic NYC night skyline vibe)",
+  "bg": "#080B12",
+  "text": "#EDEFF4",
+  "gradient_color": "#0B1320",
+  "water": "#05080E",
+  "parks": "#0E2A22",
+  "road_motorway": "#D4AF37",
+  "road_primary": "#8F98A3",
+  "road_secondary": "#646E7A",
+  "road_tertiary": "#3F4854",
+  "road_residential": "#232A33",
+  "railway": "#C8D0DB",
+  "road_default": "#3F4854"
+}
